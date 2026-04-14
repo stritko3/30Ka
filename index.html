@@ -1,68 +1,156 @@
 <!DOCTYPE html>
 <html lang="sl">
 <head>
-    <meta charset="UTF-8">
-    <title>Erikova 30ka 🎉</title>
-    <style>
-        body {
-            font-family: Arial;
-            background: #111;
-            color: white;
-            text-align: center;
-            margin: 0;
-        }
-        header {
-            padding: 50px;
-            background: linear-gradient(45deg, #ff0066, #ffcc00);
-        }
-        h1 {
-            font-size: 50px;
-        }
-        .section {
-            padding: 40px;
-        }
-        img {
-            width: 200px;
-            border-radius: 10px;
-            margin: 10px;
-        }
-        a {
-            color: #ffcc00;
-        }
-    </style>
+<meta charset="UTF-8">
+<title>Erikova 30ka 🎉</title>
+
+<style>
+body {
+    margin:0;
+    font-family: Arial;
+    background:#0f0f0f;
+    color:white;
+    text-align:center;
+}
+
+header {
+    padding:60px;
+    background: linear-gradient(45deg,#ff0066,#ffcc00);
+}
+
+.section {
+    padding:30px;
+}
+
+input, button {
+    padding:12px;
+    font-size:16px;
+    border-radius:8px;
+    border:none;
+    margin:5px;
+}
+
+button {
+    background:#ffcc00;
+    cursor:pointer;
+}
+
+#countdown {
+    font-size:30px;
+    margin-top:20px;
+}
+
+img {
+    width:150px;
+    margin:10px;
+    border-radius:10px;
+}
+</style>
+
 </head>
+
 <body>
 
 <header>
-    <h1>🎉 Erikova 30ka 🎉</h1>
-    <p>Dobrodošel na najboljši zabavi leta 😎</p>
+    <h1>🎉 ERIKOVA 30KA 🎉</h1>
+    <p>18.4 ob ~16:00 | Ježe 9</p>
+    <div id="countdown"></div>
 </header>
 
+<!-- YOUTUBE MUSIC -->
+<iframe width="0" height="0"
+src="https://www.youtube.com/embed/gU-islDdn5M?autoplay=1&loop=1&playlist=gU-islDdn5M"
+frameborder="0" allow="autoplay"></iframe>
+
 <div class="section">
-    <h2>📅 Kdaj?</h2>
-    <p>Dodaj datum tukaj</p>
+    <h2>✅ Potrdi udeležbo</h2>
+    <input type="text" id="nameInput" placeholder="Tvoje ime">
+    <button onclick="confirmAttendance()">Potrdi</button>
+    <p id="status"></p>
 </div>
 
 <div class="section">
-    <h2>📍 Kje?</h2>
-    <p>Dodaj lokacijo tukaj</p>
+    <h2>📸 Naloži slike</h2>
+    <input type="file" id="imageUpload" multiple>
+    <button onclick="uploadImages()">Upload</button>
+    <div id="gallery"></div>
 </div>
 
-<div class="section">
-    <h2>📸 Spomini</h2>
-    <img src="https://via.placeholder.com/200">
-    <img src="https://via.placeholder.com/200">
-</div>
+<script type="module">
+// 🔥 FIREBASE IMPORTS
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { getFirestore, addDoc, collection } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
 
-<div class="section">
-    <h2>🍻 Fun facts o meni</h2>
-    <p>- Dodaj nekaj smešnega 😄</p>
-</div>
+// 🔥 PASTE YOUR CONFIG HERE
+const firebaseConfig = {
+  apiKey: "PASTE",
+  authDomain: "PASTE",
+  projectId: "PASTE",
+  storageBucket: "PASTE",
+  messagingSenderId: "PASTE",
+  appId: "PASTE"
+};
 
-<div class="section">
-    <h2>🎵 Playlist</h2>
-    <a href="#">Odpri Spotify playlist</a>
-</div>
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+const storage = getStorage(app);
+
+// COUNTDOWN
+const eventDate = new Date("April 18, 2026 16:00:00").getTime();
+
+setInterval(() => {
+    const now = new Date().getTime();
+    const distance = eventDate - now;
+
+    if (distance < 0) {
+        document.getElementById("countdown").innerHTML = "🎉 PARTY TIME!";
+        return;
+    }
+
+    const days = Math.floor(distance / (1000 * 60 * 60 * 24));
+    const hours = Math.floor((distance / (1000 * 60 * 60)) % 24);
+    const minutes = Math.floor((distance / (1000 * 60)) % 60);
+
+    document.getElementById("countdown").innerHTML =
+        `⏳ ${days}d ${hours}h ${minutes}m`;
+}, 1000);
+
+// ✅ ATTENDANCE SAVE
+window.confirmAttendance = async function() {
+    const name = document.getElementById("nameInput").value;
+
+    if(!name) {
+        document.getElementById("status").innerText = "Vnesi ime 😄";
+        return;
+    }
+
+    await addDoc(collection(db, "attendance"), {
+        name: name,
+        time: new Date()
+    });
+
+    document.getElementById("status").innerText =
+        "👍 Shranjeno! Se vidimo!";
+};
+
+// 📸 IMAGE UPLOAD
+window.uploadImages = async function() {
+    const files = document.getElementById("imageUpload").files;
+
+    for (let file of files) {
+        const storageRef = ref(storage, 'images/' + file.name);
+
+        await uploadBytes(storageRef, file);
+
+        const url = await getDownloadURL(storageRef);
+
+        const img = document.createElement("img");
+        img.src = url;
+        document.getElementById("gallery").appendChild(img);
+    }
+};
+</script>
 
 </body>
 </html>
