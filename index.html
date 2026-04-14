@@ -1,117 +1,8 @@
-<!DOCTYPE html>
-<html lang="sl">
-<head>
-<meta charset="UTF-8">
-<title>Erikova 30ka 🎉</title>
-
-<style>
-body {
-    margin:0;
-    font-family: Arial;
-    background:#0f0f0f;
-    color:white;
-    text-align:center;
-}
-
-header {
-    padding:60px;
-    background: linear-gradient(45deg,#ff0066,#ffcc00);
-}
-
-.section {
-    padding:30px;
-}
-
-input, button {
-    padding:12px;
-    font-size:16px;
-    border-radius:8px;
-    border:none;
-    margin:5px;
-}
-
-button {
-    background:#ffcc00;
-    cursor:pointer;
-}
-
-#countdown {
-    font-size:30px;
-    margin-top:20px;
-}
-
-img {
-    width:150px;
-    margin:10px;
-    border-radius:10px;
-}
-
-/* GIF STYLE */
-.gif-left, .gif-right {
-    position: fixed;
-    top: 50%;
-    transform: translateY(-50%);
-    width: 150px;
-    z-index: 999;
-}
-
-.gif-left { left: 0; }
-.gif-right { right: 0; }
-
-/* MUSIC BUTTON */
-#musicBtn {
-    position: fixed;
-    bottom: 20px;
-    right: 20px;
-    background:#ffcc00;
-    padding:15px;
-    border-radius:10px;
-    cursor:pointer;
-    font-weight:bold;
-    z-index:1000;
-}
-</style>
-
-</head>
-
-<body>
-
-<!-- GIF -->
-<img src="https://c.tenor.com/_hPzunPE5qYAAAAC/tenor.gif" class="gif-left">
-<img src="https://c.tenor.com/_hPzunPE5qYAAAAC/tenor.gif" class="gif-right">
-
-<header>
-    <h1>🎉 ERIKOVA 30KA 🎉</h1>
-    <p>18.4 ob ~16:00 | Jeze 9</p>
-    <div id="countdown"></div>
-</header>
-
-<!-- AUDIO (LOCAL FILE) -->
-<audio id="bgmusic" loop>
-    <source src="music.mp3" type="audio/mpeg">
-</audio>
-
-<button id="musicBtn" onclick="playMusic()">▶ PLAY MUSIC</button>
-
-<div class="section">
-    <h2>✅ Potrdi udeležbo</h2>
-    <input type="text" id="nameInput" placeholder="Tvoje ime">
-    <button onclick="confirmAttendance()">Potrdi</button>
-    <p id="status"></p>
-</div>
-
-<div class="section">
-    <h2>📸 Naloži slike na dogodku</h2>
-    <input type="file" id="imageUpload" multiple>
-    <button onclick="uploadImages()">Upload</button>
-    <div id="gallery"></div>
-</div>
-
 <script type="module">
-// FIREBASE
+
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getFirestore, addDoc, collection } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
+import { getFirestore, addDoc, collection, onSnapshot, query, orderBy } 
+from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyDVuDeqpqBMrlbzp2KAFX5DLEBod7936Uk",
@@ -124,9 +15,8 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
-const storage = getStorage(app);
 
-// COUNTDOWN
+// ================= COUNTDOWN =================
 const eventDate = new Date(2026, 3, 18, 16, 0, 0).getTime();
 
 setInterval(() => {
@@ -146,7 +36,7 @@ setInterval(() => {
         `⏳ ${days}d ${hours}h ${minutes}m`;
 }, 1000);
 
-// ATTENDANCE
+// ================= ATTENDANCE =================
 window.confirmAttendance = async function() {
     const name = document.getElementById("nameInput").value;
 
@@ -164,24 +54,54 @@ window.confirmAttendance = async function() {
         "👍 Shranjeno! Se vidimo!";
 };
 
-// IMAGE UPLOAD
-window.uploadImages = async function() {
+// ================= CLOUDINARY =================
+const CLOUD_NAME = "dtxokrtan";
+const UPLOAD_PRESET = "party30ka";
+
+window.uploadImages = async function () {
     const files = document.getElementById("imageUpload").files;
 
     for (let file of files) {
-        const storageRef = ref(storage, 'images/' + Date.now() + "_" + file.name);
 
-        await uploadBytes(storageRef, file);
+        const formData = new FormData();
+        formData.append("file", file);
+        formData.append("upload_preset", UPLOAD_PRESET);
 
-        const url = await getDownloadURL(storageRef);
+        const res = await fetch(
+            `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`,
+            {
+                method: "POST",
+                body: formData
+            }
+        );
 
-        const img = document.createElement("img");
-        img.src = url;
-        document.getElementById("gallery").appendChild(img);
+        const data = await res.json();
+
+        await addDoc(collection(db, "images"), {
+            url: data.secure_url,
+            time: new Date()
+        });
     }
 };
 
-// MUSIC (mobile safe)
+// ================= REALTIME FEED =================
+const q = query(collection(db, "images"), orderBy("time", "desc"));
+
+onSnapshot(q, (snapshot) => {
+    const gallery = document.getElementById("gallery");
+    gallery.innerHTML = "";
+
+    snapshot.forEach(doc => {
+        const data = doc.data();
+
+        const img = document.createElement("img");
+        img.src = data.url;
+
+        gallery.appendChild(img);
+    });
+});
+
+// ================= MUSIC =================
 window.playMusic = function () {
     const music = document.getElementById("bgmusic");
 
@@ -190,10 +110,8 @@ window.playMusic = function () {
     music.play().then(() => {
         document.getElementById("musicBtn").innerText = "🎵 MUSIC ON";
     }).catch(() => {
-        alert("Klikni še enkrat za zagon glasbe 🎵");
+        alert("Klikni še enkrat 🎵");
     });
 };
-</script>
 
-</body>
-</html>
+</script>
