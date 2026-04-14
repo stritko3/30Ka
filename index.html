@@ -55,12 +55,20 @@ img {
     z-index: 999;
 }
 
-.gif-left {
-    left: 0;
-}
+.gif-left { left: 0; }
+.gif-right { right: 0; }
 
-.gif-right {
-    right: 0;
+/* MUSIC BUTTON */
+#musicBtn {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background:#ffcc00;
+    padding:15px;
+    border-radius:10px;
+    cursor:pointer;
+    font-weight:bold;
+    z-index:1000;
 }
 </style>
 
@@ -68,7 +76,7 @@ img {
 
 <body>
 
-<!-- ✅ GIFI MORAJO BITI TU (ne v style!) -->
+<!-- GIF -->
 <img src="https://c.tenor.com/_hPzunPE5qYAAAAC/tenor.gif" class="gif-left">
 <img src="https://c.tenor.com/_hPzunPE5qYAAAAC/tenor.gif" class="gif-right">
 
@@ -78,10 +86,12 @@ img {
     <div id="countdown"></div>
 </header>
 
-<!-- YOUTUBE MUSIC -->
-<iframe width="0" height="0"
-src="https://www.youtube.com/embed/gU-islDdn5M?autoplay=1&loop=1&playlist=gU-islDdn5M"
-frameborder="0" allow="autoplay"></iframe>
+<!-- AUDIO (LOCAL FILE) -->
+<audio id="bgmusic" loop>
+    <source src="music.mp3" type="audio/mpeg">
+</audio>
+
+<button id="musicBtn" onclick="playMusic()">▶ PLAY MUSIC</button>
 
 <div class="section">
     <h2>✅ Potrdi udeležbo</h2>
@@ -159,7 +169,7 @@ window.uploadImages = async function() {
     const files = document.getElementById("imageUpload").files;
 
     for (let file of files) {
-        const storageRef = ref(storage, 'images/' + file.name);
+        const storageRef = ref(storage, 'images/' + Date.now() + "_" + file.name);
 
         await uploadBytes(storageRef, file);
 
@@ -169,6 +179,19 @@ window.uploadImages = async function() {
         img.src = url;
         document.getElementById("gallery").appendChild(img);
     }
+};
+
+// MUSIC (mobile safe)
+window.playMusic = function () {
+    const music = document.getElementById("bgmusic");
+
+    music.volume = 0.5;
+
+    music.play().then(() => {
+        document.getElementById("musicBtn").innerText = "🎵 MUSIC ON";
+    }).catch(() => {
+        alert("Klikni še enkrat za zagon glasbe 🎵");
+    });
 };
 </script>
 
