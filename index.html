@@ -1,8 +1,131 @@
-<script type="module">
+<!DOCTYPE html>
+<html lang="sl">
+<head>
+<meta charset="UTF-8">
+<title>Erikova 30ka 🎉</title>
 
+<style>
+body {
+  margin:0;
+  font-family: Arial;
+  background:#0f0f0f;
+  color:white;
+  text-align:center;
+}
+
+header {
+  padding:60px;
+  background: linear-gradient(45deg,#ff0066,#ffcc00);
+}
+
+.section {
+  padding:30px;
+}
+
+input, button {
+  padding:12px;
+  font-size:16px;
+  border-radius:8px;
+  border:none;
+  margin:5px;
+}
+
+button {
+  background:#ffcc00;
+  cursor:pointer;
+}
+
+#countdown {
+  font-size:30px;
+  margin-top:20px;
+}
+
+img {
+  width:150px;
+  margin:10px;
+  border-radius:10px;
+}
+
+.gif-left, .gif-right {
+  position: fixed;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 150px;
+  z-index: 999;
+}
+
+.gif-left { left: 0; }
+.gif-right { right: 0; }
+
+#musicBtn {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  background:#ffcc00;
+  padding:15px;
+  border-radius:10px;
+  cursor:pointer;
+  font-weight:bold;
+  z-index:1000;
+}
+
+#gallery {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+}
+
+#gallery img {
+  width: 320px;
+  border-radius: 15px;
+  box-shadow: 0 0 25px rgba(255,255,255,0.15);
+}
+</style>
+</head>
+
+<body>
+
+<img src="https://c.tenor.com/_hPzunPE5qYAAAAC/tenor.gif" class="gif-left">
+<img src="https://c.tenor.com/_hPzunPE5qYAAAAC/tenor.gif" class="gif-right">
+
+<header>
+  <h1>🎉 ERIKOVA 30KA 🎉</h1>
+  <p>18.4 ob ~16:00 | Jeze 9</p>
+  <div id="countdown"></div>
+</header>
+
+<audio id="bgmusic" loop>
+  <source src="music.mp3" type="audio/mpeg">
+</audio>
+
+<button id="musicBtn" onclick="playMusic()">▶ PLAY MUSIC</button>
+
+<div class="section">
+  <h2>✅ Potrdi udeležbo</h2>
+  <input type="text" id="nameInput" placeholder="Tvoje ime">
+  <button onclick="confirmAttendance()">Potrdi</button>
+  <p id="status"></p>
+</div>
+
+<div class="section">
+  <h2>📸 Naloži slike na dogodku</h2>
+  <input type="file" id="imageUpload" multiple>
+  <button onclick="uploadImages()">Upload</button>
+  <div id="gallery"></div>
+</div>
+
+<script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getFirestore, addDoc, collection, onSnapshot, query, orderBy } 
-from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import {
+  getFirestore,
+  addDoc,
+  collection,
+  query,
+  orderBy,
+  onSnapshot
+} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { getStorage } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyDVuDeqpqBMrlbzp2KAFX5DLEBod7936Uk",
@@ -15,103 +138,99 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
+getStorage(app);
 
-// ================= COUNTDOWN =================
+// COUNTDOWN
 const eventDate = new Date(2026, 3, 18, 16, 0, 0).getTime();
 
 setInterval(() => {
-    const now = new Date().getTime();
-    const distance = eventDate - now;
+  const now = Date.now();
+  const distance = eventDate - now;
 
-    if (distance < 0) {
-        document.getElementById("countdown").innerHTML = "🎉 PARTY TIME!";
-        return;
-    }
+  if (distance < 0) {
+    document.getElementById("countdown").innerHTML = "🎉 PARTY TIME!";
+    return;
+  }
 
-    const days = Math.floor(distance / (1000 * 60 * 60 * 24));
-    const hours = Math.floor((distance / (1000 * 60 * 60)) % 24);
-    const minutes = Math.floor((distance / (1000 * 60)) % 60);
+  const days = Math.floor(distance / (1000 * 60 * 60 * 24));
+  const hours = Math.floor((distance / (1000 * 60 * 60)) % 24);
+  const minutes = Math.floor((distance / (1000 * 60)) % 60);
 
-    document.getElementById("countdown").innerHTML =
-        `⏳ ${days}d ${hours}h ${minutes}m`;
+  document.getElementById("countdown").innerHTML =
+    `⏳ ${days}d ${hours}h ${minutes}m`;
 }, 1000);
 
-// ================= ATTENDANCE =================
-window.confirmAttendance = async function() {
-    const name = document.getElementById("nameInput").value;
+// ATTENDANCE
+window.confirmAttendance = async function () {
+  const name = document.getElementById("nameInput").value;
 
-    if(!name) {
-        document.getElementById("status").innerText = "Vnesi ime 😄";
-        return;
-    }
+  if (!name) {
+    document.getElementById("status").innerText = "Vnesi ime 😄";
+    return;
+  }
 
-    await addDoc(collection(db, "attendance"), {
-        name: name,
-        time: new Date()
-    });
+  await addDoc(collection(db, "attendance"), {
+    name,
+    time: new Date()
+  });
 
-    document.getElementById("status").innerText =
-        "👍 Shranjeno! Se vidimo!";
+  document.getElementById("status").innerText = "👍 Shranjeno! Se vidimo!";
 };
 
-// ================= CLOUDINARY =================
+// CLOUDINARY
 const CLOUD_NAME = "dtxokrtan";
 const UPLOAD_PRESET = "party30ka";
 
 window.uploadImages = async function () {
-    const files = document.getElementById("imageUpload").files;
+  const files = document.getElementById("imageUpload").files;
 
-    for (let file of files) {
+  for (let file of files) {
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("upload_preset", UPLOAD_PRESET);
 
-        const formData = new FormData();
-        formData.append("file", file);
-        formData.append("upload_preset", UPLOAD_PRESET);
+    const res = await fetch(
+      `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`,
+      { method: "POST", body: formData }
+    );
 
-        const res = await fetch(
-            `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`,
-            {
-                method: "POST",
-                body: formData
-            }
-        );
+    const data = await res.json();
 
-        const data = await res.json();
-
-        await addDoc(collection(db, "images"), {
-            url: data.secure_url,
-            time: new Date()
-        });
-    }
+    await addDoc(collection(db, "images"), {
+      url: data.secure_url,
+      time: new Date()
+    });
+  }
 };
 
-// ================= REALTIME FEED =================
+// REALTIME GALLERY
 const q = query(collection(db, "images"), orderBy("time", "desc"));
 
 onSnapshot(q, (snapshot) => {
-    const gallery = document.getElementById("gallery");
-    gallery.innerHTML = "";
+  const gallery = document.getElementById("gallery");
+  gallery.innerHTML = "";
 
-    snapshot.forEach(doc => {
-        const data = doc.data();
-
-        const img = document.createElement("img");
-        img.src = data.url;
-
-        gallery.appendChild(img);
-    });
+  snapshot.forEach(doc => {
+    const img = document.createElement("img");
+    img.src = doc.data().url;
+    gallery.appendChild(img);
+  });
 });
 
-// ================= MUSIC =================
+// MUSIC
 window.playMusic = function () {
-    const music = document.getElementById("bgmusic");
+  const music = document.getElementById("bgmusic");
+  music.volume = 0.5;
 
-    music.volume = 0.5;
-
-    music.play().then(() => {
-        document.getElementById("musicBtn").innerText = "🎵 MUSIC ON";
-    }).catch(() => {
-        alert("Klikni še enkrat 🎵");
+  music.play()
+    .then(() => {
+      document.getElementById("musicBtn").innerText = "🎵 MUSIC ON";
+    })
+    .catch(() => {
+      alert("Klikni še enkrat za zagon glasbe 🎵");
     });
 };
-
 </script>
+
+</body>
+</html>
