@@ -17,8 +17,7 @@ header {
     padding:60px;
     background: linear-gradient(45deg,#ff0066,#ffcc00);
 }
-<img src="https://c.tenor.com/_hPzunPE5qYAAAAC/tenor.gif" class="gif-left">
-<img src="https://c.tenor.com/_hPzunPE5qYAAAAC/tenor.gif" class="gif-right">
+
 .section {
     padding:30px;
 }
@@ -46,7 +45,9 @@ img {
     margin:10px;
     border-radius:10px;
 }
-    .gif-left, .gif-right {
+
+/* GIF STYLE */
+.gif-left, .gif-right {
     position: fixed;
     top: 50%;
     transform: translateY(-50%);
@@ -67,9 +68,13 @@ img {
 
 <body>
 
+<!-- ✅ GIFI MORAJO BITI TU (ne v style!) -->
+<img src="https://c.tenor.com/_hPzunPE5qYAAAAC/tenor.gif" class="gif-left">
+<img src="https://c.tenor.com/_hPzunPE5qYAAAAC/tenor.gif" class="gif-right">
+
 <header>
     <h1>🎉 ERIKOVA 30KA 🎉</h1>
-    <p>18.4 ob ~16:00 | Jeze 9</p>
+    <p>18.4 ob ~16:00 | Ježe 9</p>
     <div id="countdown"></div>
 </header>
 
@@ -93,12 +98,11 @@ frameborder="0" allow="autoplay"></iframe>
 </div>
 
 <script type="module">
-// 🔥 FIREBASE IMPORTS
+// FIREBASE
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { getFirestore, addDoc, collection } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
 
-// 🔥 PASTE YOUR CONFIG HERE
 const firebaseConfig = {
   apiKey: "AIzaSyDVuDeqpqBMrlbzp2KAFX5DLEBod7936Uk",
   authDomain: "ka-erik.firebaseapp.com",
@@ -132,7 +136,7 @@ setInterval(() => {
         `⏳ ${days}d ${hours}h ${minutes}m`;
 }, 1000);
 
-// ✅ ATTENDANCE SAVE
+// ATTENDANCE
 window.confirmAttendance = async function() {
     const name = document.getElementById("nameInput").value;
 
@@ -150,7 +154,7 @@ window.confirmAttendance = async function() {
         "👍 Shranjeno! Se vidimo!";
 };
 
-// 📸 IMAGE UPLOAD
+// IMAGE UPLOAD
 window.uploadImages = async function() {
     const files = document.getElementById("imageUpload").files;
 
