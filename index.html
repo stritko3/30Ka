@@ -58,7 +58,7 @@ img {
 .gif-left { left: 0; }
 .gif-right { right: 0; }
 
-/* GALLERY (IG STYLE) */
+/* GALLERY */
 #gallery {
     display: flex;
     flex-direction: column;
@@ -83,6 +83,19 @@ img {
     cursor:pointer;
     font-weight:bold;
     z-index:1000;
+}
+
+/* ATTENDEE LIST */
+#attendeeList {
+    list-style: none;
+    padding: 0;
+}
+
+#attendeeList li {
+    background: rgba(255,255,255,0.1);
+    margin: 5px;
+    padding: 10px;
+    border-radius: 10px;
 }
 </style>
 
@@ -115,6 +128,13 @@ img {
     <p id="status"></p>
 </div>
 
+<!-- ATTENDEE LIST -->
+<div class="section">
+    <h2>👥 Kdo pride</h2>
+    <p id="guestCount"></p>
+    <ul id="attendeeList"></ul>
+</div>
+
 <!-- UPLOAD -->
 <div class="section">
     <h2>📸 Naloži slike</h2>
@@ -123,7 +143,6 @@ img {
     <div id="gallery"></div>
 </div>
 
-<!-- FIREBASE + LOGIC -->
 <script type="module">
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
@@ -136,7 +155,6 @@ import {
   orderBy
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-// 🔥 FIREBASE CONFIG
 const firebaseConfig = {
   apiKey: "AIzaSyDVuDeqpqBMrlbzp2KAFX5DLEBod7936Uk",
   authDomain: "ka-erik.firebaseapp.com",
@@ -149,7 +167,7 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-// ================= COUNTDOWN =================
+// COUNTDOWN
 const eventDate = new Date(2026, 3, 18, 16, 0, 0).getTime();
 
 function updateCountdown() {
@@ -172,9 +190,9 @@ function updateCountdown() {
 setInterval(updateCountdown, 1000);
 updateCountdown();
 
-// ================= ATTENDANCE =================
+// ATTENDANCE
 window.confirmAttendance = async function () {
-  const name = document.getElementById("nameInput").value;
+  const name = document.getElementById("nameInput").value.trim();
 
   if (!name) {
     document.getElementById("status").innerText = "Vnesi ime 😄";
@@ -190,7 +208,30 @@ window.confirmAttendance = async function () {
     "👍 Shranjeno! Se vidimo!";
 };
 
-// ================= CLOUDINARY =================
+// ATTENDEE LIST (REALTIME)
+const attendanceQuery = query(
+  collection(db, "attendance"),
+  orderBy("time", "asc")
+);
+
+onSnapshot(attendanceQuery, (snapshot) => {
+  const list = document.getElementById("attendeeList");
+  list.innerHTML = "";
+
+  document.getElementById("guestCount").innerText =
+    `Skupaj: ${snapshot.size} gostov`;
+
+  snapshot.forEach(doc => {
+    const data = doc.data();
+
+    const li = document.createElement("li");
+    li.innerText = data.name;
+
+    list.appendChild(li);
+  });
+});
+
+// CLOUDINARY
 const CLOUD_NAME = "dtxokrtan";
 const UPLOAD_PRESET = "party30ka";
 
@@ -220,7 +261,7 @@ window.uploadImages = async function () {
   }
 };
 
-// ================= REALTIME FEED =================
+// GALLERY REALTIME
 const q = query(collection(db, "images"), orderBy("time", "desc"));
 
 onSnapshot(q, (snapshot) => {
@@ -237,7 +278,7 @@ onSnapshot(q, (snapshot) => {
   });
 });
 
-// ================= MUSIC =================
+// MUSIC
 window.playMusic = function () {
   const music = document.getElementById("bgmusic");
 
