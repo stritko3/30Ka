@@ -97,13 +97,25 @@ img {
     padding: 10px;
     border-radius: 10px;
 }
+
+/* PIZZA RESULTS */
+#pizzaResults {
+    list-style: none;
+    padding: 0;
+}
+
+#pizzaResults li {
+    background: rgba(255,255,255,0.1);
+    margin: 5px;
+    padding: 10px;
+    border-radius: 10px;
+}
 </style>
 
 </head>
 
 <body>
 
-<!-- GIFS -->
 <img src="https://c.tenor.com/_hPzunPE5qYAAAAC/tenor.gif" class="gif-left">
 <img src="https://c.tenor.com/_hPzunPE5qYAAAAC/tenor.gif" class="gif-right">
 
@@ -113,7 +125,6 @@ img {
     <div id="countdown"></div>
 </header>
 
-<!-- MUSIC -->
 <audio id="bgmusic" loop>
     <source src="music.mp3" type="audio/mpeg">
 </audio>
@@ -133,6 +144,20 @@ img {
     <h2>👥 Kdo pride</h2>
     <p id="guestCount"></p>
     <ul id="attendeeList"></ul>
+</div>
+
+<!-- PIZZA VOTING -->
+<div class="section">
+    <h2>🍕 Glasovanje za pico</h2>
+
+    <button onclick="vote('Tuna')">Tuna</button>
+    <button onclick="vote('Kmečka')">Kmečka</button>
+    <button onclick="vote('Mesna')">Mesna</button>
+    <button onclick="vote('Klasika Brez Gob')">Klasika brez gob</button>
+    <button onclick="vote('Pikantna')">Pikantna</button>
+
+    <h3>Rezultati:</h3>
+    <ul id="pizzaResults"></ul>
 </div>
 
 <!-- UPLOAD -->
@@ -208,7 +233,7 @@ window.confirmAttendance = async function () {
     "👍 Shranjeno! Se vidimo!";
 };
 
-// ATTENDEE LIST (REALTIME)
+// ATTENDEE LIST
 const attendanceQuery = query(
   collection(db, "attendance"),
   orderBy("time", "asc")
@@ -229,6 +254,44 @@ onSnapshot(attendanceQuery, (snapshot) => {
 
     list.appendChild(li);
   });
+});
+
+// PIZZA VOTING
+window.vote = async function (type) {
+  await addDoc(collection(db, "votes"), {
+    type: type,
+    time: new Date()
+  });
+};
+
+const voteQuery = query(collection(db, "votes"), orderBy("time", "asc"));
+
+onSnapshot(voteQuery, (snapshot) => {
+
+  const results = {
+    "Tuna": 0,
+    "Kmečka": 0,
+    "Mesna": 0,
+    "Klasika Brez Gob": 0,
+    "Pikantna": 0
+  };
+
+  snapshot.forEach(doc => {
+    const data = doc.data();
+    if (results[data.type] !== undefined) {
+      results[data.type]++;
+    }
+  });
+
+  const list = document.getElementById("pizzaResults");
+  list.innerHTML = "";
+
+  for (let key in results) {
+    const li = document.createElement("li");
+    li.innerText = `${key} — ${results[key]} glasov`;
+    list.appendChild(li);
+  }
+
 });
 
 // CLOUDINARY
@@ -261,7 +324,7 @@ window.uploadImages = async function () {
   }
 };
 
-// GALLERY REALTIME
+// GALLERY
 const q = query(collection(db, "images"), orderBy("time", "desc"));
 
 onSnapshot(q, (snapshot) => {
