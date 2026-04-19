@@ -86,35 +86,52 @@ img {
 }
 
 /* ATTENDEE LIST */
-#attendeeList {
+#attendeeList, #pizzaResults {
     list-style: none;
     padding: 0;
 }
 
-#attendeeList li {
+#attendeeList li, #pizzaResults li {
     background: rgba(255,255,255,0.1);
     margin: 5px;
     padding: 10px;
     border-radius: 10px;
 }
 
-/* PIZZA RESULTS */
-#pizzaResults {
-    list-style: none;
-    padding: 0;
+/* OVERLAY */
+#finishedOverlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.9);
+    color: white;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    font-size: 28px;
+    z-index: 9999;
+    text-align: center;
 }
 
-#pizzaResults li {
-    background: rgba(255,255,255,0.1);
-    margin: 5px;
-    padding: 10px;
-    border-radius: 10px;
+/* DISABLE ALL */
+body.finished {
+    pointer-events: none;
+    user-select: none;
 }
 </style>
 
 </head>
 
-<body>
+<body class="finished">
+
+<!-- OVERLAY -->
+<div id="finishedOverlay">
+    <h1>🎉 FINISHED 🎉</h1>
+    <p>Hvala vsem, ki ste prišli ❤️<br>Best birthday ever!</p>
+</div>
 
 <img src="https://c.tenor.com/_hPzunPE5qYAAAAC/tenor.gif" class="gif-left">
 <img src="https://c.tenor.com/_hPzunPE5qYAAAAC/tenor.gif" class="gif-right">
@@ -129,70 +146,41 @@ img {
     <source src="music.mp3" type="audio/mpeg">
 </audio>
 
-<button id="musicBtn" onclick="playMusic()">▶ PLAY MUSIC</button>
+<button id="musicBtn">▶ PLAY MUSIC</button>
 
-<!-- ATTENDANCE -->
 <div class="section">
     <h2>✅ Potrdi udeležbo</h2>
-    <input type="text" id="nameInput" placeholder="Tvoje ime">
-    <button onclick="confirmAttendance()">Potrdi</button>
-    <p id="status"></p>
+    <input type="text" placeholder="Tvoje ime">
+    <button>Potrdi</button>
 </div>
 
-<!-- ATTENDEE LIST -->
 <div class="section">
     <h2>👥 Kdo pride</h2>
-    <p id="guestCount"></p>
+    <p>Skupaj: 🎉</p>
     <ul id="attendeeList"></ul>
 </div>
 
-<!-- PIZZA VOTING -->
 <div class="section">
     <h2>🍕 Glasovanje za pico</h2>
-
-    <button onclick="vote('Tuna')">Tuna</button>
-    <button onclick="vote('Kmečka')">Kmečka</button>
-    <button onclick="vote('Mesna')">Mesna</button>
-    <button onclick="vote('Klasika Brez Gob')">Klasika brez gob</button>
-    <button onclick="vote('Pikantna')">Pikantna</button>
+    <button>Tuna</button>
+    <button>Kmečka</button>
+    <button>Mesna</button>
+    <button>Klasika brez gob</button>
+    <button>Pikantna</button>
 
     <h3>Rezultati:</h3>
     <ul id="pizzaResults"></ul>
 </div>
 
-<!-- UPLOAD -->
 <div class="section">
     <h2>📸 Naloži slike</h2>
-    <input type="file" id="imageUpload" multiple>
-    <button onclick="uploadImages()">Upload</button>
+    <input type="file" multiple>
+    <button>Upload</button>
     <div id="gallery"></div>
 </div>
 
-<script type="module">
-
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import {
-  getFirestore,
-  addDoc,
-  collection,
-  onSnapshot,
-  query,
-  orderBy
-} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-
-const firebaseConfig = {
-  apiKey: "AIzaSyDVuDeqpqBMrlbzp2KAFX5DLEBod7936Uk",
-  authDomain: "ka-erik.firebaseapp.com",
-  projectId: "ka-erik",
-  storageBucket: "ka-erik.firebasestorage.app",
-  messagingSenderId: "198402780771",
-  appId: "1:198402780771:web:93fd05cd71a0c9fc9cd256"
-};
-
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
-
-// COUNTDOWN
+<script>
+// COUNTDOWN STILL WORKS (optional)
 const eventDate = new Date(2026, 3, 18, 16, 0, 0).getTime();
 
 function updateCountdown() {
@@ -214,148 +202,6 @@ function updateCountdown() {
 
 setInterval(updateCountdown, 1000);
 updateCountdown();
-
-// ATTENDANCE
-window.confirmAttendance = async function () {
-  const name = document.getElementById("nameInput").value.trim();
-
-  if (!name) {
-    document.getElementById("status").innerText = "Vnesi ime 😄";
-    return;
-  }
-
-  await addDoc(collection(db, "attendance"), {
-    name: name,
-    time: new Date()
-  });
-
-  document.getElementById("status").innerText =
-    "👍 Shranjeno! Se vidimo!";
-};
-
-// ATTENDEE LIST
-const attendanceQuery = query(
-  collection(db, "attendance"),
-  orderBy("time", "asc")
-);
-
-onSnapshot(attendanceQuery, (snapshot) => {
-  const list = document.getElementById("attendeeList");
-  list.innerHTML = "";
-
-  document.getElementById("guestCount").innerText =
-    `Skupaj: ${snapshot.size} gostov`;
-
-  snapshot.forEach(doc => {
-    const data = doc.data();
-
-    const li = document.createElement("li");
-    li.innerText = data.name;
-
-    list.appendChild(li);
-  });
-});
-
-// PIZZA VOTING
-window.vote = async function (type) {
-  await addDoc(collection(db, "votes"), {
-    type: type,
-    time: new Date()
-  });
-};
-
-const voteQuery = query(collection(db, "votes"), orderBy("time", "asc"));
-
-onSnapshot(voteQuery, (snapshot) => {
-
-  const results = {
-    "Tuna": 0,
-    "Kmečka": 0,
-    "Mesna": 0,
-    "Klasika Brez Gob": 0,
-    "Pikantna": 0
-  };
-
-  snapshot.forEach(doc => {
-    const data = doc.data();
-    if (results[data.type] !== undefined) {
-      results[data.type]++;
-    }
-  });
-
-  const list = document.getElementById("pizzaResults");
-  list.innerHTML = "";
-
-  for (let key in results) {
-    const li = document.createElement("li");
-    li.innerText = `${key} — ${results[key]} glasov`;
-    list.appendChild(li);
-  }
-
-});
-
-// CLOUDINARY
-const CLOUD_NAME = "dtxokrtan";
-const UPLOAD_PRESET = "party30ka";
-
-window.uploadImages = async function () {
-  const files = document.getElementById("imageUpload").files;
-
-  for (let file of files) {
-
-    const formData = new FormData();
-    formData.append("file", file);
-    formData.append("upload_preset", UPLOAD_PRESET);
-
-    const res = await fetch(
-      `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`,
-      {
-        method: "POST",
-        body: formData
-      }
-    );
-
-    const data = await res.json();
-
-    await addDoc(collection(db, "images"), {
-      url: data.secure_url,
-      time: new Date()
-    });
-  }
-};
-
-// GALLERY
-const q = query(collection(db, "images"), orderBy("time", "desc"));
-
-onSnapshot(q, (snapshot) => {
-  const gallery = document.getElementById("gallery");
-  gallery.innerHTML = "";
-
-  snapshot.forEach(doc => {
-    const data = doc.data();
-
-    const img = document.createElement("img");
-    img.src = data.url;
-
-    gallery.appendChild(img);
-  });
-});
-
-// MUSIC
-window.playMusic = function () {
-  const music = document.getElementById("bgmusic");
-
-  music.volume = 0.5;
-
-  music.play()
-    .then(() => {
-      document.getElementById("musicBtn").innerText = "🎵 MUSIC ON";
-    })
-    .catch(() => {
-      alert("Klikni še enkrat 🎵");
-    });
-};
-
 </script>
 
 </body>
